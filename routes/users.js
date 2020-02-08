@@ -36,8 +36,8 @@ async function otpSent(email,otp) {
   let transporter = nodemailer.createTransport({
    service:'gmail',
     auth: {
-      user: 'saurav.aggarwal2020@gmail.com', // generated ethereal user
-      pass: '12345ramnagar' // generated ethereal password
+      user: '', // generated ethereal user
+      pass: '' // generated ethereal password
     }
   });
 
