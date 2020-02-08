@@ -17,6 +17,9 @@ const user = new Schema({
     },
     location:{
         type:String
+    },
+    image:{
+        type:String
     }
 
 },{

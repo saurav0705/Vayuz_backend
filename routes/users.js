@@ -2,8 +2,30 @@ var express = require('express');
 var Users = require('../models/users');
 const bodyParser = require('body-parser');
 var passport = require('passport');
+const path = require('path');
 var authenticate = require('../authenticate');
+const multer = require('multer');
+const storage = multer.diskStorage({
+  destination : (req,file,cb) =>{
+    cb(null,__dirname);
+  },
+  filename: (req,file,cb)=>{
+    cb(null,file.originalname);
+  }
+})
 
+const imgFilter = (req,file,cb) => {
+  if(file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg')
+  {
+    cb(null,true);
+  }else{
+    cb(new Error('invalid format jpeg or jpg accepted'),false);
+  }
+};
+
+const upload = multer({storage:storage , limits : {
+  fileSize: 1024*1024*5
+},fileFilter:imgFilter})
 const nodemailer = require("nodemailer");
 
 // async..await is not allowed in global scope, must use a wrapper
@@ -14,8 +36,8 @@ async function otpSent(email,otp) {
   let transporter = nodemailer.createTransport({
    service:'gmail',
     auth: {
-      user: 'piyushmarya77@gmail.com', // generated ethereal user
-      pass: 'championship' // generated ethereal password
+      user: 'saurav.aggarwal2020@gmail.com', // generated ethereal user
+      pass: '12345ramnagar' // generated ethereal password
     }
   });
 
@@ -67,7 +89,8 @@ userRouter.route('/')
   
 });
 
-userRouter.post('/signup',(req,res,next)=>{
+userRouter.post('/signup',upload.single('profile'),(req,res,next)=>{
+  console.log('file--------------',req.file);
   Users.register(new Users({username:req.body.username}) , req.body.password,(err,user)=>{
     if(err){
       res.statusCode = 400;
@@ -78,10 +101,12 @@ userRouter.post('/signup',(req,res,next)=>{
       user.name = req.body.name;
       user.interests = [];
       user.location = req.body.location;
+      user.image = '\\routes\\'+req.file.originalname;
       user.otp= parseInt(Math.random()*100000);
       
       user.save()
       .then((user)=>{
+        console.log(user);
         otpSent(user.username,user.otp);
         passport.authenticate('local')(req,res,()=>{
           res.statusCode = 200;
@@ -120,6 +145,14 @@ userRouter.post('/verify',authenticate.verifyUser,(req,res,next)=>{
   },(err)=>next(err))
   .catch((err)=>next(err));
   
+});
+
+userRouter.route('/test')
+.get((req,res,next)=>{
+  otpSent('singhbirvarinder@gmail.com','456123');
+  res.statusCode=200;
+  res.setHeader('Content-type','application/json');
+  res.json({"status":"ok"});
 });
 
 module.exports = userRouter;
